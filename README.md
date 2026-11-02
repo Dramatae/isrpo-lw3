@@ -1,71 +1,108 @@
-# catlinter README
+# CatLinter 🐱
 
-This is the README for your extension "catlinter". After writing up a brief description, we recommend including the following sections.
+## Автор
 
-## Features
+- **ФИО:** Чащина Анастасия Максимовна
+- **Группа:** М3110
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Название плагина
 
-For example if there is an image subfolder under your extension project workspace:
+**CatLinter** — расширение для Visual Studio Code, предназначенное для поиска распространённых ошибок и потенциально нежелательных конструкций в исходном коде на C и C++.
 
-\!\[feature X\]\(images/feature-x.png\)
+## Описание
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+CatLinter анализирует открытые файлы C и C++, показывает найденные проблемы непосредственно в редакторе и в отдельной боковой панели, предлагает автоматические исправления, а также использует мотивирующие мемы с котиками.
 
-## Requirements
+Проверка выполняется при открытии и сохранении файла, а также после его редактирования. Во время набора текста проверка запускается с задержкой 300 мс после последнего изменения, чтобы не анализировать документ после каждого нажатия клавиши.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Возможности
 
-## Extension Settings
+### 1. Анализ кода C и C++
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Расширение проверяет документы с языковыми идентификаторами `c` и `cpp`. Найденные проблемы отображаются:
+- подчёркиваниями и диагностическими сообщениями в редакторе;
+- в боковой панели **Cat Linter**;
+- в виде сгруппированного по файлам списка с количеством проблем для каждого файла.
 
-For example:
+У каждого пункта списка есть название проблемы, номер строки, описание и название предлагаемого исправления. Для проблем можно снимать/ставить галочки.
 
-This extension contributes the following settings:
+### 2. Реализованные правила проверки (5 правил)
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
 
-## Known Issues
+| Правило | Что обнаруживает | Предлагаемое исправление |
+|---|---|---|
+| `assign-in-if` | Присваивание `=` вместо сравнения в условии `if` или `while` | Заменить `=` на `==` |
+| `int-size-loop` | Использование `int` в цикле `for` при сравнении индекса с `size()` или `length()` | Заменить `int` на `size_t` |
+| `endl` | Использование `std::endl` или `endl` | Заменить на `'\n'` |
+| `semicolon-after-if` | Лишнюю точку с запятой сразу после закрывающей скобки условия `if` | Удалить `;` |
+| `redundant-true` | Избыточное сравнение выражения с `true` (`== true`) | Удалить `== true` |
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Проблемы имеют два уровня важности:
+- **Warning** — предупреждение о потенциальной ошибке;
+- **Information** — информационное замечание о конструкции, которую можно упростить или оптимизировать.
 
-## Release Notes
+### 3. Автоматическое исправление
 
-Users appreciate release notes as you update your extension.
+CatLinter предлагает несколько способов исправить найденные проблемы:
 
-### 1.0.0
+- **Быстрое исправление (Quick Fix).** Для найденной проблемы можно вызвать стандартное меню быстрых исправлений VS Code и применить предложенную замену.
+- **Исправление выбранных.** Команда `Cat Linter: Исправить выбранные` применяет исправления только к отмеченным галочками пунктам.
+- **Выбор всех проблем.** Команда `Cat Linter: Выбрать все` отмечает все найденные проблемы.
+- **Снятие всех отметок.** Команда `Cat Linter: Снять все галочки` снимает галочки со всех пунктов.
 
-Initial release of ...
+Если при вызове `Cat Linter: Исправить выбранные` диапазоны нескольких ошибок накладываются друг на друга, то исправляется только первая. После успешного исправления расширение показывает количество исправленных проблем.
 
-### 1.0.1
+### 4. Переход к проблеме в исходном коде
 
-Fixed issue #.
+При нажатии в боковой панеле на текст проблемы откроется файл, в котором она находится. В редакторе выделится её подчеркнутый текст.
 
-### 1.1.0
+### 5. Боковая панель
 
-Added features X, Y, and Z.
+В панели **Cat Linter** находится представление **Найденные ошибки**:
+- проблемы сгруппированы по файлам;
+- рядом с именем файла отображается количество найденных проблем;
+- список обновляется после повторной проверки документов.
 
----
+Если ошибок нет, расширение показывает приветственное сообщение с предложением открыть файл C++ для проверки.
 
-## Following extension guidelines
+### 6. Строка состояния
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+В строке состояния VS Code отображается общее состояние проверки:
+- `😺 Cat Linter` — проблем не найдено;
+- `😿 N` — найдено `N` проблем.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+При наведении на индикатор отображается подсказка с результатом проверки. Нажатие на индикатор открывает боковую панель Cat Linter.
 
-## Working with Markdown
+### 7. Котики и мотивирующие мемы
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+Расширение может показывать случайную картинку с котиком после исправления проблем. Также доступна отдельная команда **Cat Linter: Мотивирующий кот**, которая открывает окно с мотивационной картинкой.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+Изображения для мемов загружаются из папки `media/memes` внутри проекта расширения. Поддерживаются форматы PNG, JPG, JPEG, GIF и WEBP. Если папка отсутствует или в ней нет подходящих изображений, вместо картинки отображается подсказка о том, куда их добавить.
 
-## For more information
+Чтобы не показывать один и тот же мем два раза подряд, расширение по возможности (при наличии более одной картинки) выбирает другое изображение.
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+### 8. Настройки расширения
 
-**Enjoy!**
+В настройках VS Code доступны параметры CatLinter:
+
+| Параметр | Тип | Значение по умолчанию | Назначение |
+|---|---|---|---|
+| `catlinter.disabledRules` | Массив строк | `[]` | Список идентификаторов правил, которые нужно отключить. Например: `endl`, `redundant-true`, `assign-in-if` |
+| `catlinter.showCats` | Логическое значение | `true` | Показывать ли котика после исправления проблем |
+
+При изменении списка отключённых правил открытые документы проверяются повторно.
+
+## Команды
+
+| Команда | Назначение |
+|---|---|
+| `Cat Linter: Исправить выбранные` | Исправить отмеченные проблемы |
+| `Cat Linter: Выбрать все` | Отметить все найденные проблемы |
+| `Cat Linter: Снять все галочки` | Снять отметки со всех проблем |
+| `Cat Linter: Показать в коде` | Перейти к соответствующему месту в исходном коде |
+| `Cat Linter: Мотивирующий кот` | Открыть окно с мотивационным котом |
+
+
+## Ограничения текущей версии
+
+CatLinter реализует набор конкретных проверок, перечисленных выше, а не полный анализатор языка C/C++. Обнаружение проблем основано на обработке текста и регулярных выражениях.
