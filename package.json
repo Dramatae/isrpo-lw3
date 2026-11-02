@@ -12,36 +12,54 @@
   "activationEvents": ["onLanguage:cpp", "onLanguage:c"],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      { "command": "catlinter.fixSelected", "title": "Cat Linter: Исправить выбранные", "icon": "$(check-all)" },
-      { "command": "catlinter.selectAll", "title": "Cat Linter: Выбрать все", "icon": "$(checklist)" },
-      { "command": "catlinter.clearAll", "title": "Cat Linter: Снять все галочки", "icon": "$(close-all)" },
-      { "command": "catlinter.reveal", "title": "Cat Linter: Показать в коде" }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        { "id": "catlinter", "title": "Cat Linter", "icon": "media/cat.svg" }
-      ]
-    },
-    "views": {
-      "catlinter": [
-        { "id": "catlinter.issues", "name": "Найденные ошибки" }
-      ]
-    },
-    "viewsWelcome": [
-      { "view": "catlinter.issues", "contents": "Мяу! Ошибок не найдено 😺\nОткройте файл C++, и я его проверю." }
-    ],
-    "menus": {
-      "view/title": [
-        { "command": "catlinter.fixSelected", "when": "view == catlinter.issues", "group": "navigation@1" },
-        { "command": "catlinter.selectAll", "when": "view == catlinter.issues", "group": "navigation@2" },
-        { "command": "catlinter.clearAll", "when": "view == catlinter.issues", "group": "navigation@3" }
-      ],
-      "commandPalette": [
-        { "command": "catlinter.reveal", "when": "false" }
-      ]
-    }
+  "commands": [
+    { "command": "catlinter.fixSelected", "title": "Cat Linter: Исправить выбранные", "icon": "$(check-all)" },
+    { "command": "catlinter.selectAll", "title": "Cat Linter: Выбрать все", "icon": "$(checklist)" },
+    { "command": "catlinter.clearAll", "title": "Cat Linter: Снять все галочки", "icon": "$(close-all)" },
+    { "command": "catlinter.reveal", "title": "Cat Linter: Показать в коде" },
+    { "command": "catlinter.motivate", "title": "Cat Linter: Мотивирующий кот", "icon": "$(heart)" }
+  ],
+  "viewsContainers": {
+    "activitybar": [
+      { "id": "catlinter", "title": "Cat Linter", "icon": "media/cat.svg" }
+    ]
   },
+  "views": {
+    "catlinter": [
+      { "id": "catlinter.issues", "name": "Найденные ошибки" }
+    ]
+  },
+  "viewsWelcome": [
+    { "view": "catlinter.issues", "contents": "Мяу! Ошибок не найдено 😺\nОткройте файл C++, и я его проверю." }
+  ],
+  "menus": {
+    "view/title": [
+      { "command": "catlinter.fixSelected", "when": "view == catlinter.issues", "group": "navigation@1" },
+      { "command": "catlinter.selectAll", "when": "view == catlinter.issues", "group": "navigation@2" },
+      { "command": "catlinter.clearAll", "when": "view == catlinter.issues", "group": "navigation@3" },
+      { "command": "catlinter.motivate", "when": "view == catlinter.issues", "group": "navigation@4" }
+    ],
+    "commandPalette": [
+      { "command": "catlinter.reveal", "when": "false" }
+    ]
+  },
+  "configuration": {
+    "title": "Cat Linter",
+    "properties": {
+      "catlinter.disabledRules": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": [],
+        "description": "Правила, которые нужно отключить. Например: endl, redundant-true, assign-in-if"
+      },
+      "catlinter.showCats": {
+        "type": "boolean",
+        "default": true,
+        "description": "Показывать котика после исправления ошибок"
+      }
+    }
+  }
+},
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

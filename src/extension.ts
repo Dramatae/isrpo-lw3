@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { memePage } from './cats';
 import { Finding, runRules } from './rules';
 
 const SOURCE = 'Cat Linter';
@@ -23,8 +24,11 @@ const checkOverrides = new Map<string, boolean>(); // галочки, котор
 const diagnostics = vscode.languages.createDiagnosticCollection('cat-linter');
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 let statusItem: vscode.StatusBarItem | undefined;
+let memePanel: vscode.WebviewPanel | undefined;
+let lastMeme: string | undefined;
 
 // == Настройки ==
+
 function config(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration('catlinter');
 }
@@ -33,7 +37,12 @@ function disabledRules(): Set<string> {
   return new Set(config().get<string[]>('disabledRules', []));
 }
 
-// == Боковая панель ==
+function catsEnabled(): boolean {
+  return config().get<boolean>('showCats', true);
+}
+
+// == Боковая панель (дерево со списком) ==
+
 class IssueTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changeEmitter.event;
@@ -87,6 +96,7 @@ class IssueTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 const treeProvider = new IssueTreeProvider();
 
 // == Лампочка ==
+
 class CatFixProvider implements vscode.CodeActionProvider {
   static readonly kinds = [vscode.CodeActionKind.QuickFix];
 
@@ -129,6 +139,7 @@ class CatFixProvider implements vscode.CodeActionProvider {
 }
 
 // == Проверка файлов ==
+
 function isCppDoc(doc: vscode.TextDocument): boolean {
   return doc.languageId === 'cpp' || doc.languageId === 'c';
 }
@@ -221,8 +232,54 @@ function updateStatus(): void {
   statusItem.tooltip = total === 0 ? 'Ошибок нет — мур!' : `Найдено проблем: ${total}`;
 }
 
+// == Мемы ==
+
+// Все картинки из папки media/memes внутри проекта расширения.
+async function listMemes(context: vscode.ExtensionContext): Promise<vscode.Uri[]> {
+  const dir = vscode.Uri.joinPath(context.extensionUri, 'media', 'memes');
+  try {
+    const entries = await vscode.workspace.fs.readDirectory(dir);
+    return entries
+      .filter(([name, type]) => type === vscode.FileType.File && /\.(png|jpe?g|gif|webp)$/i.test(name))
+      .map(([name]) => vscode.Uri.joinPath(dir, name));
+  } catch {
+    return []; // папки нет — покажем подсказку
+  }
+}
+
+// Показывает случайный мем рядом с редактором.
+async function showMeme(context: vscode.ExtensionContext, title: string): Promise<void> {
+  const memes = await listMemes(context);
+
+  let chosen: vscode.Uri | undefined;
+  if (memes.length > 0) {
+    // Стараемся не показывать один и тот же мем два раза подряд
+    const pool = memes.length > 1 ? memes.filter((m) => m.toString() !== lastMeme) : memes;
+    chosen = pool[Math.floor(Math.random() * pool.length)];
+    lastMeme = chosen.toString();
+  }
+
+  if (!memePanel) {
+    memePanel = vscode.window.createWebviewPanel(
+      'catlinterMeme',
+      'Cat Linter 🐱',
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true }, // не отнимаем фокус у редактора
+      { localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')] }
+    );
+    memePanel.onDidDispose(() => {
+      memePanel = undefined;
+    });
+  } else {
+    memePanel.reveal(vscode.ViewColumn.Beside, true);
+  }
+
+  const src = chosen ? memePanel.webview.asWebviewUri(chosen).toString() : undefined;
+  memePanel.webview.html = memePage(title, src, memePanel.webview.cspSource);
+}
+
 // == Команды ==
-async function fixSelected(): Promise<void> {
+
+async function fixSelected(context: vscode.ExtensionContext): Promise<void> {
   const edit = new vscode.WorkspaceEdit();
   let count = 0;
 
@@ -253,7 +310,11 @@ async function fixSelected(): Promise<void> {
     return;
   }
 
-  vscode.window.showInformationMessage(`😺 Исправлено проблем: ${count}`);
+  if (catsEnabled()) {
+    await showMeme(context, `Исправлено: ${count}`);
+  } else {
+    vscode.window.showInformationMessage(`😺 Исправлено проблем: ${count}`);
+  }
 }
 
 function setAllChecked(value: boolean): void {
@@ -275,6 +336,7 @@ async function reveal(issue: Issue): Promise<void> {
 }
 
 // == Запуск расширения ==
+
 export function activate(context: vscode.ExtensionContext): void {
   const treeView = vscode.window.createTreeView('catlinter.issues', {
     treeDataProvider: treeProvider,
@@ -345,11 +407,12 @@ export function activate(context: vscode.ExtensionContext): void {
       { providedCodeActionKinds: CatFixProvider.kinds }
     ),
 
-    // Команды (их названия объявлены в package.json)
-    vscode.commands.registerCommand('catlinter.fixSelected', fixSelected),
+    // Команды из package.json
+    vscode.commands.registerCommand('catlinter.fixSelected', () => fixSelected(context)),
     vscode.commands.registerCommand('catlinter.selectAll', () => setAllChecked(true)),
     vscode.commands.registerCommand('catlinter.clearAll', () => setAllChecked(false)),
-    vscode.commands.registerCommand('catlinter.reveal', reveal)
+    vscode.commands.registerCommand('catlinter.reveal', reveal),
+    vscode.commands.registerCommand('catlinter.motivate', () => showMeme(context, 'Мотивация дня'))
   );
 
   // Проверяем файлы, которые уже открыты
